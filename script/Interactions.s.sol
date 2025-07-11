@@ -61,14 +61,24 @@ contract FundSubscription is Script, CodeConstants {
 }
 
 contract AddConsumer is Script {
-	function addConsumerUsingConfig() public {
-		HelperConfig HelperConfig = new HelperConfig();
+	function addConsumerUsingConfig(address mostRecentlyDeployed) public {
+		HelperConfig helperConfig = new HelperConfig();
 		address vrfCoordinator = helperConfig.getConfig().vrfCoordinator;
-        uint256 subscriptionId = helperConfig.getConfig().subscriptionId;
-		// addConsumer(???, vrfCoordinator, subId);
+        uint256 subId = helperConfig.getConfig().subscriptionId;
+		addConsumer(mostRecentlyDeployed, vrfCoordinator, subId);
 	}
 
-	function addConsumer(address contractToAddToVrf, address vrfCoordinator, uint256 subId) public {}
+	function addConsumer(address contractToAddToVrf, address vrfCoordinator, uint256 subId) public {
+		console2.log("Adding consumer contract: ", contractToAddToVrf);
+		console2.log("To vrfCoordinator: ", vrfCoordinator);
+		console2.log("On ChainId: ", block.chainid);
+		vm.startBroadcast();
+		VRFCoordinatorV2_5Mock(vrfCoordinator).addConsumer(subId, contractToAddToVrf);
+		vm.stopBroadcast();
+	}
 
-	function run() external {}
+	function run() external {
+		address mostRecentlyDeployed = DevOpsTools.get_most_recent_deployment("Raffle", block.chainid);
+		addConsumerUsingConfig(mostRecentlyDeployed);
+	}
 }
